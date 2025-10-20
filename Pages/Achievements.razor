@@ -159,11 +159,38 @@
             </li>
         }
     </ul>
+
+    <h2>Going Solo</h2>
+
+    <p>Hit at least 85% of the notes on all scripted guitar solos in Rock Band 4 on Hard or Expert.</p>
+
+    <h4>@profile.mAchPersistentData.mSongList.mRB4AuthoredSoloSongs.Length / @GuitarSoloSongs.Length Completed:</h4>
+
+    <ul>
+        @foreach (int song in GuitarSoloSongs)
+        {
+            @if (!profile.mAchPersistentData.mSongList.mRB4AuthoredSoloSongs.Contains(song))
+            {
+                <li>
+                    <i class="bi bi-circle"></i>
+                    "@songCache.GetSongInfo(song)!.Title" - @songCache.GetSongInfo(song)!.Artist
+                </li>
+            }
+        }
+        @for (int i = 0; i < profile.mAchPersistentData.mSongList.mRB4AuthoredSoloSongs.Length && i < 30; i++)
+        {
+            <li>
+                <i class="bi bi-check-circle-fill text-success"></i>
+                "@songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mRB4AuthoredSoloSongs[i])!.Title" - @songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mRB4AuthoredSoloSongs[i])!.Artist
+            </li>
+        }
+    </ul>
 }
 
 
 @code {
     private RBProfile? profile;
+    private static int[] GuitarSoloSongs = [5054, 5051, 5048, 5047, 5043, 5042, 5041, 5040, 5053, 5064, 5062, 5061, 5060, 5068, 5010, 5013, 5014, 5015, 5017, 5046, 5045, 5067, 5003, 5006, 5004, 5009, 5063, 5036, 5035, 5032, 5031, 5029, 5023, 5022, 5025, 5024, 5018, 5058, 5059, 5056, 5070, 5038, 5039, 5033, 5065, 5019, 5016, 5002];
 
     protected override void OnInitialized()
     {
