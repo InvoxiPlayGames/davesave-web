@@ -1,0 +1,35 @@
+﻿@inject SavedStorage savedStorage
+@inject SongCache songCache
+@inherits LayoutComponentBase
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            @if (savedStorage.GetLogin() != null)
+            {
+                <img style="margin-right: 3px" width="32" height="32" src="@savedStorage.GetLogin()!.Profile!.ProfilePictureURI" />
+                <span>@savedStorage.GetLogin()!.Profile!.Gamertag</span>
+            }
+            else if (savedStorage.GetProfile() != null && savedStorage.GetMetadata()!.Source == "file")
+            {
+                <span>Local Save Loaded</span>
+            }
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await savedStorage.LoadSavedSave();
+        await savedStorage.LoadXboxLogin();
+        await songCache.ReadDatabase();
+    }
+}

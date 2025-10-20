@@ -1,0 +1,129 @@
+﻿@using davesave.Saves
+@using davesave.Saves.RB4
+@inject SavedStorage savedStorage
+@inject NavigationManager NavigationManager
+@inject SongCache songCache
+@page "/scores"
+
+<h1>Scores</h1>
+
+@if (profile != null)
+{
+    <EditForm EditContext="@editContext">
+        <InputRadioGroup @bind-Value="@SelectedDifficulty">
+            <div style="margin-bottom: 5px" class="btn-group" role="group" aria-label="Difficulty">
+                @foreach (var diff in DifficultyList)
+                {
+                    <InputRadio class="btn-check" id="@diff" Value="diff" />
+                    <label class="btn btn-outline-primary" for="@diff">@diff</label>
+                }
+            </div>
+        </InputRadioGroup>
+        <br />
+        <InputRadioGroup @bind-Value="@SelectedInstrument">
+            <div style="margin-bottom: 5px" class="btn-group" role="group" aria-label="Instrument">
+                @foreach (var inst in InstrumentList)
+                {
+                    <InputRadio class="btn-check" id="@inst" Value="inst" />
+                    <label class="btn btn-outline-primary" for="@inst">@inst</label>
+                }
+            </div>
+        </InputRadioGroup>
+    </EditForm>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Song Name</th>
+                <th scope="col">Artist</th>
+                <th scope="col">Score</th>
+                <th scope="col">Stars</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (RBQuickplaySongPersistentData spd in profile!.mQuickplaySongData.Values)
+            {
+                @if (spd.mSongPersistentData.mScore[ins, dif] > 0 &&
+                        songCache.GetSongInfo(spd.mSongPersistentData.mSongID) != null)
+                {
+                    <tr>
+                        <td>@songCache.GetSongInfo(spd.mSongPersistentData.mSongID)!.Title</td>
+                        <td>@songCache.GetSongInfo(spd.mSongPersistentData.mSongID)!.Artist</td>
+                        <td>
+                            @spd.mSongPersistentData.mScore[ins, dif]
+                            @if (spd.mSongPersistentData.mFullCombo[ins, dif] == 2)
+                            {
+                                <span style="margin-left: 1px" class="badge rounded-pill bg-success">FC</span>
+                            }
+                        </td>
+                        <td>
+                            @if (spd.mSongPersistentData.mStars[ins, dif] == 6)
+                            {
+                                <span class="text-success">
+                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                                </span>
+                            }
+                            else
+                            {
+                                <span>
+                                @for (int i = 0; i < spd.mSongPersistentData.mStars[ins, dif]; i++)
+                                {
+                                    <i class="bi bi-star-fill"></i>
+                                }
+                                @for (int i = spd.mSongPersistentData.mStars[ins, dif]; i < 5; i++)
+                                {
+                                    <i class="bi bi-star"></i>
+                                }
+                                </span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    static List<string> InstrumentList = new List<string> { "Guitar", "Bass", "Drums", "Pro Drums", "Vocals", "Harmonies", "Band" };
+    static List<string> DifficultyList = new List<string> { "Easy", "Medium", "Hard", "Expert" };
+    private static int ins = 0;
+    private static int dif = 3;
+
+    private string _selectedInstrument = InstrumentList[ins];
+    private string _selectedDifficulty = DifficultyList[dif];
+    public string SelectedInstrument
+    {
+        get { return _selectedInstrument; }
+        set { _selectedInstrument = value; OnChanged(); }
+    }
+    public string SelectedDifficulty
+    {
+        get { return _selectedDifficulty; }
+        set { _selectedDifficulty = value; OnChanged(); }
+    }
+
+    public EditContext editContext = new("");
+
+    private RBProfile? profile;
+
+    protected override void OnInitialized()
+    {
+        if (savedStorage.GetProfile() == null)
+        {
+            NavigationManager.NavigateTo("/", false);
+        }
+        if (!songCache.HasDatabase())
+        {
+            NavigationManager.NavigateTo("/", false);
+        }
+        profile = savedStorage.GetProfile();
+    }
+
+    private void OnChanged()
+    {
+        ins = InstrumentList.IndexOf(SelectedInstrument);
+        dif = DifficultyList.IndexOf(SelectedDifficulty);
+        StateHasChanged();
+    }
+}

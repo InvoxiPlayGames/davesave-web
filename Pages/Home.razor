@@ -1,0 +1,127 @@
+﻿@using davesave.Saves
+@using davesave.Saves.RB4
+@using System.Text.Json
+@using LibForge.Util
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject SavedStorage savedStorage
+@page "/"
+
+<PageTitle>davesave</PageTitle>
+
+<h1>Welcome to davesave!</h1>
+
+@if (profile == null)
+{
+    <p>davesave is an UNOFFICIAL Rock Band 4 stats viewer and achievement tracker. Sign in with Xbox to get started!</p>
+
+    <p>
+        <button type="button" @onclick="StartXboxOAuth" class="btn btn-success"><span class="bi bi-xbox" aria-hidden="true"></span> Sign in with Xbox</button><br />
+        <small>By signing in with Xbox you agree to our <a href="/terms">Terms of Service and Privacy Policy</a>.</small>
+    </p>
+
+    <!--p>Or alternatively, load a save file:</!p>
+
+    <InputFile OnChange = "LoadFile" /-->
+    @if (statusText != null)
+    {
+        <p>@statusText</p>
+    }
+}
+else
+{
+    <p>
+        <b>Total Song Plays:</b> @profile.mTotalSongPlays<br />
+        <b>Song High Scores:</b> @profile.mQuickplaySongData.Count (<a href="/scores">View High Scores</a>)<br />
+        <b>Saved Characters:</b> @profile.mCharacters.mNumCharacters<br />
+        <b>Tour/Rockudrama Bands:</b> @profile.mCampaignBands.Length<br />
+        <b>Last Updated:</b> @profileMeta!.LastModified<br />
+    </p>
+
+    <p>
+        @if (profileMeta!.Source == "xbox")
+        {
+            <button type="button" @onclick="StartXboxOAuth" class="btn btn-success"><span class="bi bi-xbox" aria-hidden="true"></span> Refresh (Sign in with Xbox)</button>
+            <button type="button" @onclick="SignOut" class="btn btn-secondary">Sign Out</button>
+            <br />
+            <small>By refreshing by signing in with Xbox, you agree to our <a href="/terms">Terms of Service and Privacy Policy</a>.</small>
+        }
+        else
+        {
+            <button type="button" @onclick="SignOut" class="btn btn-secondary">Unload</button>
+        }
+    </p>
+}
+
+<p>
+    Developed by <a href="https://invoxiplaygames.uk/">Emma / InvoxiPlayGames</a>.
+    This website is not affiliated with or endorsed by Harmonix Music Systems or Epic Games, Inc.
+    <br />
+    Source code is available to you under the GNU Affero General Public License version 3:
+    <a href="https://github.com/InvoxiPlayGames/davesave-web">https://github.com/InvoxiPlayGames/davesave-web</a>
+</p>
+
+@code {
+    private static bool firstLoad = true;
+    private string? statusText;
+    private RBProfile? profile;
+    private LoadedSaveMetadata? profileMeta;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (firstLoad == true)
+        {
+            await savedStorage.LoadSavedSave();
+            await savedStorage.LoadXboxLogin();
+            firstLoad = false;
+        }
+        profile = savedStorage.GetProfile();
+        profileMeta = savedStorage.GetMetadata();
+    }
+
+    private async Task SignOut()
+    {
+        await savedStorage.ClearLoadedSave();
+        profile = null;
+        profileMeta = null;
+        NavigationManager.NavigateTo("/", false);
+    }
+
+    private async Task StartXboxOAuth()
+    {
+        string cookie = await savedStorage.StartAuthGetCookie();
+        Dictionary<string, string> args = new Dictionary<string, string>()
+        {
+            { "service", "davesave" },
+            { "cookie", cookie },
+            { "redirectUri", AppSettings.PUBLIC_URL + "/auth" }
+        };
+        HttpResponseMessage msg = await Http.PostAsync(AppSettings.WEBAPI_URL + "/v1/auth/start", new FormUrlEncodedContent(args));
+        StartAuthResponse resp = JsonSerializer.Deserialize<StartAuthResponse>(msg.Content.ReadAsStream())!;
+        await savedStorage.StartAuthSaveState(resp.State!);
+        NavigationManager.NavigateTo(resp.LoginURI!, true);
+    }
+
+    /*private async Task LoadFile(InputFileChangeEventArgs e)
+    {
+        Stream fs = e.File.OpenReadStream(8000000); // 8MB limit - PS4 saves are pretty big
+        MemoryStream memoryStream = new();
+        await fs.CopyToAsync(memoryStream);
+        fs.Close();
+        memoryStream.Position = 0;
+        SaveDetection.SaveType type = await SaveDetection.DetectSaveTypeAsync(memoryStream);
+        filename += " - " + type.ToString();
+        if (type == SaveDetection.SaveType.RB4PS4 || type == SaveDetection.SaveType.RB4Xbox)
+        {
+            EncryptedReadRevisionStream encryptedReadRevisionStream = new(memoryStream, type == SaveDetection.SaveType.RB4PS4);
+            RBProfile rBProfile = RBProfile.ReadFromStream(encryptedReadRevisionStream);
+            encryptedReadRevisionStream.FinishReading();
+            encryptedReadRevisionStream.Close();
+            memoryStream.Close();
+            text = $"Band 1: {rBProfile.mCampaignBands[0].mBandName} - ";
+            text += $"Character 1: {rBProfile.mCharacters.mCharacters[0].Node(1).ToString(0)}";
+            
+        }
+    }
+    */
+}

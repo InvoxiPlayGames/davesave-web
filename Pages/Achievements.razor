@@ -1,0 +1,180 @@
+﻿@using davesave.Saves
+@using davesave.Saves.RB4
+@inject SavedStorage savedStorage
+@inject NavigationManager NavigationManager
+@inject SongCache songCache
+@page "/achievements"
+
+<h1>Achievements</h1>
+
+@if (profile != null)
+{
+    <h2>Serious Pipes</h2>
+
+    <p>Earned a rating of "Awesome" on at least 90% of the phrases in 6 songs on Hard Vocals.</p>
+
+    @if (profile.mAchPersistentData.mSongList.mAwesomeVocalsSongs.Length == 0)
+    {
+        <h4>Not started!</h4>
+    }
+    else
+    {
+        @if (profile.mAchPersistentData.mSongList.mAwesomeVocalsSongs.Length >= 6)
+        {
+            <h4>6 / 6 Completed:</h4>
+        }
+        else
+        {
+            <h4>@profile.mAchPersistentData.mSongList.mAwesomeVocalsSongs.Length / 6 Completed:</h4>
+        }
+        <ul>
+            @for (int i = 0; i < profile.mAchPersistentData.mSongList.mAwesomeVocalsSongs.Length && i < 6; i++)
+            {
+                <li>
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    "@songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mAwesomeVocalsSongs[i])!.Title" - @songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mAwesomeVocalsSongs[i])!.Artist
+                </li>
+            }
+        </ul>
+    }
+
+    <h2>Living Room Legend</h2>
+
+    <p>Earned Gold Stars on any thirty Rock Band 4 disc songs in Quickplay mode.</p>
+
+    @if (profile.mAchPersistentData.mSongList.mRB4GoldStarSongs.Length == 0)
+    {
+        <h4>Not started!</h4>
+    }
+    else
+    {
+        @if (profile.mAchPersistentData.mSongList.mRB4GoldStarSongs.Length >= 30)
+        {
+            <h4>30 / 30 Completed:</h4>
+        }
+        else
+        {
+            <h4>@profile.mAchPersistentData.mSongList.mRB4GoldStarSongs.Length / 30 Completed:</h4>
+        }
+        <ul>
+            @for (int i = 0; i < profile.mAchPersistentData.mSongList.mRB4GoldStarSongs.Length && i < 30; i++)
+            {
+                <li>
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    "@songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mRB4GoldStarSongs[i])!.Title" - @songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mRB4GoldStarSongs[i])!.Artist
+                </li>
+            }
+        </ul>
+    }
+
+    <h2>Rock Band Fan</h2>
+
+    <p>Earned 5 Stars on Medium (3 Stars on Hard/Expert) on any 30 Rock Band 4 disc songs in Quickplay.</p>
+
+    @if (profile.mAchPersistentData.mSongList.mRB4FanSongs.Length == 0)
+    {
+        <h4>Not started!</h4>
+    }
+    else
+    {
+        @if (profile.mAchPersistentData.mSongList.mRB4FanSongs.Length >= 30)
+        {
+            <h4>30 / 30 Completed:</h4>
+        }
+        else
+        {
+            <h4>@profile.mAchPersistentData.mSongList.mRB4FanSongs.Length / 30 Completed:</h4>
+        }
+        <ul>
+            @for (int i = 0; i < profile.mAchPersistentData.mSongList.mRB4FanSongs.Length && i < 30; i++)
+            {
+                <li>
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    "@songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mRB4FanSongs[i])!.Title" - @songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mRB4FanSongs[i])!.Artist
+                </li>
+            }
+        </ul>
+    }
+
+    <h2>Rock Band Master</h2>
+
+    <p>Earn 5 Stars on every disc song in Rock Band 4 on Hard in Quickplay mode.</p>
+
+    @if (profile.mAchPersistentData.mSongList.mRB4MasterSongs.Length >= 65)
+    {
+        <h4>65 / 65 Completed:</h4>
+    }
+    else
+    {
+        <h4>@profile.mAchPersistentData.mSongList.mRB4MasterSongs.Length / 65 Completed:</h4>
+    }
+    <ul>
+    @foreach (int song in songCache.GetDiscSongs()!)
+    {
+        @if (!profile.mAchPersistentData.mSongList.mRB4MasterSongs.Contains(song))
+        {
+            <li>
+                <i class="bi bi-circle"></i>
+                "@songCache.GetSongInfo(song)!.Title" - @songCache.GetSongInfo(song)!.Artist
+            </li>
+        }
+    }
+    @for (int i = 0; i < profile.mAchPersistentData.mSongList.mRB4MasterSongs.Length && i < 30; i++)
+    {
+        <li>
+            <i class="bi bi-check-circle-fill text-success"></i>
+            "@songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mRB4MasterSongs[i])!.Title" - @songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mRB4MasterSongs[i])!.Artist
+        </li>
+    }
+    </ul>
+
+    <h2>Rock Band Immortal</h2>
+
+    <p>Earn 5 Stars on every disc song in Rock Band 4 on Expert in Quickplay mode.</p>
+
+    @if (profile.mAchPersistentData.mSongList.mRB4ImmortalSongs.Length >= 65)
+    {
+        <h4>65 / 65 Completed:</h4>
+    }
+    else
+    {
+        <h4>@profile.mAchPersistentData.mSongList.mRB4ImmortalSongs.Length / 65 Completed:</h4>
+    }
+    <ul>
+        @foreach (int song in songCache.GetDiscSongs()!)
+        {
+            @if (!profile.mAchPersistentData.mSongList.mRB4ImmortalSongs.Contains(song))
+            {
+                <li>
+                    <i class="bi bi-circle"></i>
+                    "@songCache.GetSongInfo(song)!.Title" - @songCache.GetSongInfo(song)!.Artist
+                </li>
+            }
+        }
+        @for (int i = 0; i < profile.mAchPersistentData.mSongList.mRB4ImmortalSongs.Length && i < 30; i++)
+        {
+            <li>
+                <i class="bi bi-check-circle-fill text-success"></i>
+                "@songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mRB4ImmortalSongs[i])!.Title" - @songCache.GetSongInfo(profile.mAchPersistentData.mSongList.mRB4ImmortalSongs[i])!.Artist
+            </li>
+        }
+    </ul>
+}
+
+
+@code {
+    private RBProfile? profile;
+
+    protected override void OnInitialized()
+    {
+        if (savedStorage.GetProfile() == null)
+        {
+            NavigationManager.NavigateTo("/", false);
+        }
+        if (!songCache.HasDatabase())
+        {
+            NavigationManager.NavigateTo("/", false);
+        }
+        profile = savedStorage.GetProfile();
+    }
+}

@@ -1,0 +1,159 @@
+﻿@using davesave.Saves
+@using davesave.Saves.RB4
+@using System.Text.Json
+@using LibForge.Util
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject SavedStorage savedStorage
+@page "/auth"
+
+@if (profile != null)
+{
+    <img style="margin-right: 2px" width="32" height="32" src="@profile.ProfilePictureURI" /> <span>@profile.Gamertag</span><br />
+}
+
+<p>@statusText</p>
+
+@if (offerReturn)
+{
+    <button @onclick="ReturnHome" class="btn btn-primary">Return to Home</button>
+}
+
+@code {
+    private XboxProfileInformation? profile = null;
+    private string statusText = "";
+
+    private bool offerReturn = false;
+
+    void ReturnHome()
+    {
+        NavigationManager.NavigateTo("/", false);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        string currentUri = NavigationManager.Uri;
+        string[] uriQuery = currentUri.Split('?');
+        if (uriQuery.Length != 2)
+        {
+            ReturnHome();
+            return;
+        }
+
+        string[] queryParamsArray = uriQuery[1].Split('&');
+        Dictionary<string, string> queryParams = new();
+        foreach(string param in queryParamsArray)
+        {
+            string[] split = param.Split('=');
+            if (split.Length == 2)
+                queryParams[split[0]] = split[1];
+        }
+
+        NavigationManager.NavigateTo("/auth", false);
+
+        if (!queryParams.ContainsKey("state"))
+        {
+            Console.WriteLine("No state parameter.");
+            ReturnHome();
+            return;
+        }
+
+        string? cookie = await savedStorage.RedeemAuthVerifyState(queryParams["state"]);
+        if (cookie == null)
+        {
+            Console.WriteLine("State validation failed.");
+            ReturnHome();
+            return;
+        }
+
+        if (queryParams.ContainsKey("error") || !queryParams.ContainsKey("code"))
+        {
+            statusText = "Microsoft sign-in failed.";
+            offerReturn = true;
+            return;
+        }
+
+        statusText = "Signing in...";
+        StateHasChanged();
+
+        Dictionary<string, string> redeemArgs = new Dictionary<string, string>()
+        {
+            { "state", queryParams["state"] },
+            { "cookie", cookie },
+            { "code", queryParams["code"] }
+        };
+        HttpResponseMessage msg = await Http.PostAsync(AppSettings.WEBAPI_URL + "/v1/auth/redeem", new FormUrlEncodedContent(redeemArgs));
+        if (msg.StatusCode != System.Net.HttpStatusCode.OK)
+        {
+            statusText = "An unknown error occurred while signing you in.";
+            try
+            {
+                if (msg.Content.Headers.ContentType != null && msg.Content.Headers.ContentType.MediaType == "application/json")
+                {
+                    ErrorResponse? errorResponse = JsonSerializer.Deserialize<ErrorResponse>(msg.Content.ReadAsStream());
+                    if (errorResponse != null && errorResponse.ErrorSource != null && errorResponse.Message != null)
+                    {
+                        statusText = $"Error ({errorResponse.ErrorSource}:{errorResponse.ErrorCode:X}) while signing in: {errorResponse.Message}";
+                    }
+                }
+            } catch (Exception)
+            {
+            }
+            offerReturn = true;
+            return;
+        }
+        RedeemAuthResponse resp = JsonSerializer.Deserialize<RedeemAuthResponse>(msg.Content.ReadAsStream())!;
+
+        profile = resp.Profile;
+        await savedStorage.SaveXboxLogin(resp);
+
+        statusText = "Downloading saved game...";
+        StateHasChanged();
+
+        HttpRequestMessage saveMetaRequest = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri(AppSettings.WEBAPI_URL + "/v1/save/rb4/meta"),
+            Headers =
+            {
+                { "Authorization", "Bearer " + resp.AccessTicket!.JWT },
+            }
+        };
+        HttpResponseMessage msg2 = await Http.SendAsync(saveMetaRequest);
+        if (msg2.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            SavegameMetaResponse? metaResponse = JsonSerializer.Deserialize<SavegameMetaResponse>(msg2.Content.ReadAsStream());
+
+            HttpRequestMessage saveRequest = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(AppSettings.WEBAPI_URL + "/v1/save/rb4/download"),
+                Headers =
+                {
+                    { "Authorization", "Bearer " + resp.AccessTicket!.JWT },
+                }
+            };
+            HttpResponseMessage msg3 = await Http.SendAsync(saveRequest);
+            byte[] responseBuf = await msg3.Content.ReadAsByteArrayAsync();
+
+            if (!await savedStorage.ImportSaveFile(responseBuf, "xbox", metaResponse!.LastModified))
+            {
+                statusText = "Failed to load save file.";
+                offerReturn = true;
+                StateHasChanged();
+                return;
+            }
+
+            NavigationManager.NavigateTo("/", false);
+        }
+        else if (msg2.Content.Headers.ContentType != null && msg2.Content.Headers.ContentType.MediaType == "application/json")
+        {
+            ErrorResponse? errorResponse = JsonSerializer.Deserialize<ErrorResponse>(msg2.Content.ReadAsStream());
+            if (errorResponse != null && errorResponse.ErrorSource != null && errorResponse.Message != null)
+            {
+                statusText = $"Error ({errorResponse.ErrorSource}:{errorResponse.ErrorCode:X}) while signing in: {errorResponse.Message}";
+            }
+        }
+
+    }
+}
