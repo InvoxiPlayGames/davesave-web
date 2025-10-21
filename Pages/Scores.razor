@@ -41,43 +41,88 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (RBQuickplaySongPersistentData spd in profile!.mQuickplaySongData.Values)
+            @if (dif < 4)
             {
-                @if (spd.mSongPersistentData.mScore[ins, dif] > 0 &&
-                        songCache.GetSongInfo(spd.mSongPersistentData.mSongID) != null)
+                @foreach (RBQuickplaySongPersistentData spd in profile!.mQuickplaySongData.Values)
                 {
-                    <tr>
-                        <td>@songCache.GetSongInfo(spd.mSongPersistentData.mSongID)!.Title</td>
-                        <td>@songCache.GetSongInfo(spd.mSongPersistentData.mSongID)!.Artist</td>
-                        <td>
-                            @spd.mSongPersistentData.mScore[ins, dif]
-                            @if (spd.mSongPersistentData.mFullCombo[ins, dif] == 2)
-                            {
-                                <span style="margin-left: 1px" class="badge rounded-pill bg-success">FC</span>
-                            }
-                        </td>
-                        <td>
-                            @if (spd.mSongPersistentData.mStars[ins, dif] == 6)
-                            {
-                                <span class="text-success">
-                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                                </span>
-                            }
-                            else
-                            {
-                                <span>
-                                @for (int i = 0; i < spd.mSongPersistentData.mStars[ins, dif]; i++)
+                    @if (spd.mSongPersistentData.mScore[ins, dif] > 0 &&
+                            songCache.GetSongInfo(spd.mSongPersistentData.mSongID) != null)
+                    {
+                        <tr>
+                            <td>@songCache.GetSongInfo(spd.mSongPersistentData.mSongID)!.Title</td>
+                            <td>@songCache.GetSongInfo(spd.mSongPersistentData.mSongID)!.Artist</td>
+                            <td>
+                                @spd.mSongPersistentData.mScore[ins, dif]
+                                @if (spd.mSongPersistentData.mFullCombo[ins, dif] == 2)
                                 {
-                                    <i class="bi bi-star-fill"></i>
+                                    <span style="margin-left: 1px" class="badge rounded-pill bg-success">FC</span>
                                 }
-                                @for (int i = spd.mSongPersistentData.mStars[ins, dif]; i < 5; i++)
+                            </td>
+                            <td>
+                                @if (spd.mSongPersistentData.mStars[ins, dif] == 6)
                                 {
-                                    <i class="bi bi-star"></i>
+                                    <span class="text-success">
+                                        <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                                    </span>
                                 }
-                                </span>
-                            }
-                        </td>
-                    </tr>
+                                else
+                                {
+                                    <span>
+                                        @for (int i = 0; i < spd.mSongPersistentData.mStars[ins, dif]; i++)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        @for (int i = spd.mSongPersistentData.mStars[ins, dif]; i < 5; i++)
+                                        {
+                                            <i class="bi bi-star"></i>
+                                        }
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            }
+            else if (dif == 4)
+            {
+                @foreach (RBQuickplaySongPersistentData spd in profile!.mBrutalSongData.Values)
+                {
+                    @if (spd.mSongPersistentData.mScore[ins, 3] > 0 &&
+                            songCache.GetSongInfo(spd.mSongPersistentData.mSongID) != null)
+                    {
+                        <tr>
+                            <td>@songCache.GetSongInfo(spd.mSongPersistentData.mSongID)!.Title</td>
+                            <td>@songCache.GetSongInfo(spd.mSongPersistentData.mSongID)!.Artist</td>
+                            <td>
+                                @spd.mSongPersistentData.mScore[ins, 3]
+                                @if (spd.mSongPersistentData.mFullCombo[ins, 3] == 2)
+                                {
+                                    <span style="margin-left: 1px" class="badge rounded-pill bg-danger">FC</span>
+                                }
+                            </td>
+                            <td>
+                                @if (spd.mSongPersistentData.mStars[ins, 3] == 6)
+                                {
+                                    <span class="text-danger">
+                                        <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>
+                                        @for (int i = 0; i < spd.mSongPersistentData.mStars[ins, 3]; i++)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        @for (int i = spd.mSongPersistentData.mStars[ins, 3]; i < 5; i++)
+                                        {
+                                            <i class="bi bi-star"></i>
+                                        }
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
                 }
             }
         </tbody>
@@ -86,7 +131,7 @@
 
 @code {
     static List<string> InstrumentList = new List<string> { "Guitar", "Bass", "Drums", "Pro Drums", "Vocals", "Harmonies", "Band" };
-    static List<string> DifficultyList = new List<string> { "Easy", "Medium", "Hard", "Expert" };
+    static List<string> DifficultyList = new List<string> { "Easy", "Medium", "Hard", "Expert", "Brutal" };
     private static int ins = 0;
     private static int dif = 3;
 
